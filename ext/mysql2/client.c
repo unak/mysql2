@@ -782,7 +782,6 @@ static VALUE rb_mysql_query(VALUE self, VALUE sql, VALUE current) {
   REQUIRE_CONNECTED(wrapper);
   args.mysql = wrapper->client;
 
-  (void)RB_GC_GUARD(current);
   Check_Type(current, T_HASH);
   rb_ivar_set(self, intern_current_query_options, current);
 
@@ -806,11 +805,15 @@ static VALUE rb_mysql_query(VALUE self, VALUE sql, VALUE current) {
 
     rb_rescue2(do_query, (VALUE)&async_args, disconnect_and_raise, self, rb_eException, (VALUE)0);
 
+    (void)RB_GC_GUARD(current);
+    (void)RB_GC_GUARD(sql);
     return rb_ensure(rb_mysql_client_async_result, self, disconnect_and_mark_inactive, self);
   }
 #else
   do_send_query((VALUE)&args);
 
+    (void)RB_GC_GUARD(current);
+    (void)RB_GC_GUARD(sql);
   /* this will just block until the result is ready */
   return rb_ensure(rb_mysql_client_async_result, self, disconnect_and_mark_inactive, self);
 #endif
